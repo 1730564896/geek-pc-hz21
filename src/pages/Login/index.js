@@ -1,11 +1,32 @@
 import React, { Component } from 'react'
-import { Card, Button, Checkbox, Form, Input } from 'antd'
+import { Card, Button, Checkbox, Form, Input, message } from 'antd'
 import './index.scss'
+import { login } from 'api/user'
 import logo from 'assets/logo.png'
 
 export default class Login extends Component {
-    onFinish = (values) => {
-        console.log(values)
+    state = {
+        loading: false
+    }
+    onFinish = async (values) => {
+        // console.log(values)
+        this.setState({ loading: true })
+        try {
+            const res = await login(values.mobile, values.code)
+            // console.log(res)
+            // 登录成功
+            // 1.保存token
+            localStorage.setItem('token', res.data.token)
+            // 2.提示消息, 跳转到首页
+            message.success('登录成功', 1, () => {
+                this.props.history.push('/home')
+            })
+        } catch (error) {
+            // console.log(error)
+            message.error(error.response.data.message, 1, () => {
+                this.setState({ loading: false })
+            })
+        }
     }
     render() {
         return (
@@ -19,7 +40,7 @@ export default class Login extends Component {
                         onFinish={this.onFinish}
                         initialValues={{
                             agree: true,
-                            mobile: '13811111111',
+                            mobile: '13911111111',
                             code: '246810'
                         }}
                     >
@@ -74,7 +95,7 @@ export default class Login extends Component {
                             <Checkbox>我已阅读并同意[隐私条款]和[用户协议]</Checkbox>
                         </Form.Item>
                         <Form.Item>
-                            <Button type="primary" htmlType="submit" block>
+                            <Button type="primary" htmlType="submit" block loading={this.state.loading}>
                                 登录
                             </Button>
                         </Form.Item>
