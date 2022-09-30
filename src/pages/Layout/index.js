@@ -74,6 +74,7 @@ export default class LayoutComponent extends Component {
                         <Layout
                             style={{
                                 padding: '24px',
+                                overflow: 'auto'
                             }}
                         >
                             <Content

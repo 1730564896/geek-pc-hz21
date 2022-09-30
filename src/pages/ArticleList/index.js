@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { ArticleStatus } from 'api/constant'
 import { getChannels } from 'api/channel'
 import { getArticles } from 'api/article'
+import defaultImg from 'assets/error.png'
 
 const { Option } = Select
 
@@ -17,58 +18,47 @@ export default class ArticleList extends Component {
     columns = [
         {
             title: '封面',
-            dataIndex: 'name'
+            render(data) {
+                // console.log(data)
+                if (data.cover.type === 0) {
+                    // 无图，渲染默认图片
+                    return (
+                        <img src={defaultImg} alt="" style={{ width: 200, height: 120, objectFit: 'cover' }} />
+                    )
+                }
+                // 有图
+                return (
+                    <img src={data.cover.images[0]} alt="" style={{ width: 200, height: 120, objectFit: 'cover' }} />
+                )
+            }
         },
         {
             title: '标题',
-            dataIndex: 'age'
+            dataIndex: 'title'
         },
         {
             title: '状态',
-            dataIndex: 'address'
+            dataIndex: 'status'
         },
         {
             title: '发布时间',
-            dataIndex: 'tags'
+            dataIndex: 'pubdate'
         },
         {
             title: '阅读数',
-            dataIndex: 'tags'
+            dataIndex: 'read_count'
         },
         {
             title: '评论数',
-            dataIndex: 'tags'
+            dataIndex: 'comment_count'
         },
         {
             title: '点赞数',
-            dataIndex: 'tags'
+            dataIndex: 'like_count'
         },
         {
             title: '操作'
         }
-    ]
-    data = [
-        {
-            key: '1',
-            name: 'John Brown',
-            age: 32,
-            address: 'New York No. 1 Lake Park',
-            tags: ['nice', 'developer'],
-        },
-        {
-            key: '2',
-            name: 'Jim Green',
-            age: 42,
-            address: 'London No. 1 Lake Park',
-            tags: ['loser'],
-        },
-        {
-            key: '3',
-            name: 'Joe Black',
-            age: 32,
-            address: 'Sidney No. 1 Lake Park',
-            tags: ['cool', 'teacher'],
-        },
     ]
     async componentDidMount() {
         this.getChannelList()
@@ -88,6 +78,7 @@ export default class ArticleList extends Component {
         console.log(values)
     }
     render() {
+        const { total_count, results } = this.state.articles
         return (
             <div className={styles.root}>
                 <Card
@@ -127,8 +118,8 @@ export default class ArticleList extends Component {
                         </Form.Item>
                     </Form>
                 </Card>
-                <Card title={'根据筛选条件共查询到xxxx条结果'}>
-                    <Table columns={this.columns} dataSource={this.data} />
+                <Card title={`根据筛选条件共查询到${total_count}条结果`}>
+                    <Table columns={this.columns} dataSource={results} rowKey="id" />
                 </Card>
             </div>
         )
