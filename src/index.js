@@ -4,7 +4,10 @@ import ReactDOM from 'react-dom'
 import 'antd/dist/antd.min.css'
 import './index.css';
 import App from './App'
+import 'moment/locale/zh-cn'
+import locale from 'antd/es/locale/zh_CN'
+import { ConfigProvider } from 'antd'
 
-ReactDOM.render(<App />, document.getElementById('root'))
+ReactDOM.render(<ConfigProvider locale={locale}><App /></ConfigProvider>, document.getElementById('root'))
 
 
