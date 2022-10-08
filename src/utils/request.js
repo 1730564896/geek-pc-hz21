@@ -3,8 +3,9 @@ import { hasToken, getToken, removeToken } from 'utils/storage'
 import history from 'utils/history'
 import { message } from 'antd'
 
+export const baseURL = 'http://geek.itheima.net/v1_0/'
 const instance = axios.create({
-    baseURL: 'http://geek.itheima.net/v1_0/',
+    baseURL,
     timeout: 5000
 })
 
@@ -27,6 +28,11 @@ instance.interceptors.response.use(function (response) {
     return response.data
 }, function (error) {
     // 对响应错误做点什么
+    if (!error.response) {
+        // 如果error信息中没有response，一般是由于网络超时导致
+        message.error('网络繁忙,请稍后重试')
+        return Promise.reject('网络繁忙,请售后重试')
+    }
     if (error.response.status === 401) {
         // 代表token过期了
         // 1.删除token

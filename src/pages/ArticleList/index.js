@@ -1,18 +1,23 @@
 import React, { Component } from 'react'
 import styles from './index.module.scss'
-import { Card, Breadcrumb, Form, Radio, Button, Select, DatePicker, Table } from 'antd'
+import { Card, Breadcrumb, Form, Radio, Button, DatePicker, Table, Tag, Space, Modal, message } from 'antd'
 import { Link } from 'react-router-dom'
 import { ArticleStatus } from 'api/constant'
-import { getChannels } from 'api/channel'
-import { getArticles } from 'api/article'
+import { getArticles, delArticle } from 'api/article'
 import defaultImg from 'assets/error.png'
+import { EditOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
+import Channel from 'components/Channel'
 
-const { Option } = Select
 
 export default class ArticleList extends Component {
+    // 用于存放查询文章列表的所有参数
+    reqParams = {
+        page: 1,
+        per_page: 10
+    }
     state = {
         // 频道列表数据
-        channels: [],
+        // channels: [],
         articles: {}
     }
     columns = [
@@ -38,7 +43,14 @@ export default class ArticleList extends Component {
         },
         {
             title: '状态',
-            dataIndex: 'status'
+            dataIndex: 'status',
+            render(status) {
+                const obj = ArticleStatus.find(item => item.id === status)
+                // console.log(status)
+                return (
+                    <Tag color={obj.color}>{obj.name}</Tag>
+                )
+            }
         },
         {
             title: '发布时间',
@@ -57,28 +69,71 @@ export default class ArticleList extends Component {
             dataIndex: 'like_count'
         },
         {
-            title: '操作'
+            title: '操作',
+            render: (data) => {
+                return (
+                    <Space>
+                        <Button type="primary" shape="circle" icon={<EditOutlined />} onClick={() => this.handleEdit(data.id)} />
+                        <Button type="primary" danger shape="circle" icon={<DeleteOutlined />} onClick={() => this.handleDelete(data.id)} />
+                    </Space>
+                )
+            }
         }
     ]
-    async componentDidMount() {
-        this.getChannelList()
+    componentDidMount() {
         this.getArticleList()
     }
-    getChannelList = async () => {
-        const res = await getChannels()
-        // console.log(res)
-        this.setState({ channels: res.data.channels })
-    }
     getArticleList = async () => {
-        const res = await getArticles()
+        const res = await getArticles(this.reqParams)
         // console.log(res)
         this.setState({ articles: res.data })
     }
-    onFinish = (values) => {
-        console.log(values)
+    onFinish = ({ status, channel_id, date }) => {
+        if (status !== -1) {
+            this.reqParams.status = status
+        } else {
+            delete this.reqParams.status
+        }
+        if (channel_id !== undefined) {
+            this.reqParams.channel_id = channel_id
+        }
+        if (date) {
+            this.reqParams.begin_pubdate = date[0].startOf('day').format('YYYY-MM-DD HH:mm:ss')
+            this.reqParams.end_pubdate = date[1].endOf('day').format('YYYY-MM-DD HH:mm:ss')
+        }
+        // 如果是查询操作，需要让当前页码值为1
+        this.reqParams.page = 1
+        // console.log(this.reqParams)
+        // 重新发送请求
+        this.getArticleList()
+    }
+    onChange = (page, pageSize) => {
+        this.reqParams.page = page
+        this.reqParams.per_page = pageSize
+        this.getArticleList()
+    }
+    handleDelete = (id) => {
+        // console.log(id)
+        // 弹窗提示
+        Modal.confirm({
+            title: '温馨提示',
+            icon: <ExclamationCircleOutlined />,
+            content: '您确定要删除这篇文章吗',
+
+            onOk: async () => {
+                // console.log('OK')
+                // 发送请求，删除文章
+                await delArticle(id)
+                this.getArticleList()
+                message.success('删除成功')
+            }
+        })
+    }
+    handleEdit = (id) => {
+        this.props.history.push(`/home/publish/${id}`)
     }
     render() {
-        const { total_count, results } = this.state.articles
+        const { total_count, results, per_page, page } = this.state.articles
         return (
             <div className={styles.root}>
                 <Card
@@ -100,13 +155,14 @@ export default class ArticleList extends Component {
                             </Radio.Group>
                         </Form.Item>
                         <Form.Item label="频道" name="channel_id">
-                            <Select style={{ width: 200 }} placeholder="请选择文章频道">
+                            {/* <Select style={{ width: 200 }} placeholder="请选择文章频道">
                                 {
                                     this.state.channels.map(item => (
                                         <Option key={item.id} value={item.id}>{item.name}</Option>
                                     ))
                                 }
-                            </Select>
+                            </Select> */}
+                            <Channel></Channel>
                         </Form.Item>
                         <Form.Item label="日期" name="date">
                             <DatePicker.RangePicker />
@@ -119,7 +175,18 @@ export default class ArticleList extends Component {
                     </Form>
                 </Card>
                 <Card title={`根据筛选条件共查询到${total_count}条结果`}>
-                    <Table columns={this.columns} dataSource={results} rowKey="id" />
+                    <Table
+                        columns={this.columns}
+                        dataSource={results}
+                        rowKey="id"
+                        pagination={{
+                            position: ['bottomCenter'],
+                            total: total_count,
+                            pageSize: per_page,
+                            currentPage: page,
+                            onChange: this.onChange
+                        }}
+                    />
                 </Card>
             </div>
         )

@@ -1,5 +1,5 @@
 // import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
-import { Router, Route, Switch } from 'react-router-dom'
+import { Router, Route, Switch, Redirect } from 'react-router-dom'
 import LayoutComponent from 'pages/Layout'
 import Login from 'pages/Login'
 import AuthRoute from 'components/AuthRoute'
@@ -20,6 +20,7 @@ function App() {
       </div>
       {/* 配置路由规则 */}
       <Switch>
+        <Redirect exact from="/" to="/home"></Redirect>
         <Route path="/login" component={Login}></Route>
         {/* <Route path="/home" component={LayoutComponent}></Route> */}
         {/* Route组件可以不使用component渲染， 使用render属性渲染，写入逻辑 */}

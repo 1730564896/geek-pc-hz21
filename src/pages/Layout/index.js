@@ -23,7 +23,21 @@ const items2 = [UserOutlined, LaptopOutlined, NotificationOutlined].map((icon, i
 
 export default class LayoutComponent extends Component {
     state = {
-        profile: {}
+        profile: {},
+        selectedKey: this.props.location.pathname
+    }
+    // 组件更新完成时候的钩子函数，路有变化了，组件也会重新渲染
+    componentDidUpdate(prevProps) {
+        // 判断是否url地质发生变化，如果是才更新
+        let pathname = this.props.location.pathname
+        if (this.props.location.pathname !== prevProps.location.pathname) {
+            if (pathname.startsWith('/home/publish')) {
+                pathname = '/home/publish'
+            }
+            this.setState({
+                selectedKey: pathname
+            })
+        }
     }
     async componentDidMount() {
         const res = await getUserProfile()
@@ -60,10 +74,12 @@ export default class LayoutComponent extends Component {
                     </Header>
                     <Layout>
                         <Sider width={200}>
+                            {/* 如果默认高亮不会变化，使用defaultSelectedKeys，会变化则使用selectedKeys，此处使用selectedKeys */}
                             <Menu
                                 theme="dark"
                                 mode="inline"
-                                defaultSelectedKeys={this.props.location.pathname}
+                                // defaultSelectedKeys={this.props.location.pathname}
+                                selectedKeys={[this.state.selectedKey]}
                                 style={{
                                     height: '100%',
                                     borderRight: 0,
@@ -83,7 +99,10 @@ export default class LayoutComponent extends Component {
                                 <Switch>
                                     <Route exact path="/home" component={Home}></Route>
                                     <Route path="/home/list" component={ArticleList}></Route>
-                                    <Route path="/home/publish" component={ArticlePublish}></Route>
+                                    {/* 发布文章的路由 */}
+                                    <Route exact path="/home/publish" component={ArticlePublish} key="add"></Route>
+                                    {/* 编辑文章的路由 */}
+                                    <Route path="/home/publish/:id" component={ArticlePublish} key="edit"></Route>
                                 </Switch>
                             </Content>
                         </Layout>
